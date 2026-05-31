@@ -97,6 +97,48 @@
         <a id="download" download="qrcode.png" hidden>Download PNG</a>
       </div>
     </main>
-    <script type="module" src="./src/main.ts"></script>
+    <script>
+      const form = document.querySelector("#qr-form");
+      const input = document.querySelector("#data-input");
+      const image = document.querySelector("#qr-image");
+      const placeholder = document.querySelector("#placeholder");
+      const downloadLink = document.querySelector("#download");
+
+      let currentObjectUrl = null;
+
+      async function generate(data) {
+        if (currentObjectUrl) {
+          URL.revokeObjectURL(currentObjectUrl);
+          currentObjectUrl = null;
+        }
+
+        const res = await fetch(`/api/qr?data=${encodeURIComponent(data)}`);
+        if (!res.ok) {
+          placeholder.textContent = `Error: ${res.status} ${res.statusText}`;
+          placeholder.hidden = false;
+          image.hidden = true;
+          downloadLink.hidden = true;
+          return;
+        }
+
+        const blob = await res.blob();
+        currentObjectUrl = URL.createObjectURL(blob);
+
+        image.src = currentObjectUrl;
+        image.hidden = false;
+        placeholder.hidden = true;
+
+        downloadLink.href = currentObjectUrl;
+        downloadLink.hidden = false;
+      }
+
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const data = input.value.trim();
+        if (data.length > 0) {
+          generate(data);
+        }
+      });
+    </script>
   </body>
 </html>
