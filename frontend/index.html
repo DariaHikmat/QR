@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QR Code Generator</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #0f172a;
+        --card: #1e293b;
+        --accent: #38bdf8;
+        --text: #e2e8f0;
+        --muted: #94a3b8;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        font-family: system-ui, -apple-system, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        padding: 1.5rem;
+      }
+      .card {
+        background: var(--card);
+        border-radius: 16px;
+        padding: 2rem;
+        width: 100%;
+        max-width: 420px;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+      }
+      h1 { margin: 0 0 0.25rem; font-size: 1.5rem; }
+      p.subtitle { margin: 0 0 1.5rem; color: var(--muted); font-size: 0.9rem; }
+      form { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+      input {
+        flex: 1;
+        padding: 0.7rem 0.9rem;
+        border-radius: 10px;
+        border: 1px solid #334155;
+        background: #0f172a;
+        color: var(--text);
+        font-size: 1rem;
+      }
+      input:focus { outline: 2px solid var(--accent); border-color: transparent; }
+      button {
+        padding: 0.7rem 1.1rem;
+        border: none;
+        border-radius: 10px;
+        background: var(--accent);
+        color: #042f3e;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+      }
+      button:hover { filter: brightness(1.08); }
+      .result { display: grid; place-items: center; min-height: 240px; }
+      #qr-image {
+        width: 240px;
+        height: 240px;
+        background: #fff;
+        border-radius: 12px;
+        padding: 12px;
+      }
+      #placeholder { color: var(--muted); }
+      #download {
+        display: inline-block;
+        margin-top: 1rem;
+        color: var(--accent);
+        text-decoration: none;
+        font-size: 0.9rem;
+      }
+      #download:hover { text-decoration: underline; }
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <h1>QR Code Generator</h1>
+      <p class="subtitle">Type a URL or any text, then generate.</p>
+      <form id="qr-form">
+        <input
+          id="data-input"
+          type="text"
+          placeholder="https://example.com"
+          autocomplete="off"
+          required
+        />
+        <button type="submit">Generate</button>
+      </form>
+      <div class="result">
+        <p id="placeholder">Your QR code will appear here.</p>
+        <img id="qr-image" alt="Generated QR code" hidden />
+      </div>
+      <div style="text-align: center">
+        <a id="download" download="qrcode.png" hidden>Download PNG</a>
+      </div>
+    </main>
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>

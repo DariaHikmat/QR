@@ -1,6 +1,3 @@
-// Frontend for the QR code generator.
-// Talks to the FastAPI backend at /api/qr and renders the returned PNG.
-
 const form = document.querySelector<HTMLFormElement>("#qr-form")!;
 const input = document.querySelector<HTMLInputElement>("#data-input")!;
 const image = document.querySelector<HTMLImageElement>("#qr-image")!;
@@ -10,7 +7,6 @@ const downloadLink = document.querySelector<HTMLAnchorElement>("#download")!;
 let currentObjectUrl: string | null = null;
 
 async function generate(data: string): Promise<void> {
-  // Revoke any previous blob URL so we don't leak memory.
   if (currentObjectUrl) {
     URL.revokeObjectURL(currentObjectUrl);
     currentObjectUrl = null;
