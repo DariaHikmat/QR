@@ -158,14 +158,6 @@ To deploy from CI, two repository settings are needed:
 - Setting up a complete **CI/CD pipeline** in GitHub Actions
 - Packaging and deploying a Python app to **Azure App Service**
 - Writing **automated tests** and wiring them into the release process
-
-## Possible next steps
-
-- Expose the `box_size` and `border` options in the user interface
-- Add QR code styling (colors, logos in the center)
-- Store generated codes using Azure Storage or a database
-- Add a staging environment and deploy there before production
-
 ---
 
 Built as a learning project to practice full-stack development, cloud deployment, and CI/CD.
