@@ -13,9 +13,8 @@
 <p align="center">
   <img src="docs/P1.png" alt="A generated QR code" width="30%">
   &nbsp;&nbsp;
-  <img src="docs/P2.png" alt="The app's starting state" width="30%">
+  <img src="docs/p2.png" alt="The app's starting state" width="30%">
 </p>
-
 ---
 
 ## Overview  
