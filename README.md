@@ -1,41 +1,113 @@
-# QR Code Generator — CI/CD with Bicep + GitHub Actions
+# QR Code Generator
 
-A small but complete starter kit for learning the full deploy loop:
+> A full-stack web app that turns any URL or text into a downloadable QR code — built with Python and TypeScript, and shipped to Azure through a fully automated CI/CD pipeline.
+
+![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
+![Azure](https://img.shields.io/badge/Azure-App%20Service-0078D4?logo=microsoftazure&logoColor=white)
+![GitHub Actions](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-2088FF?logo=githubactions&logoColor=white)
+
+---
+
+<p align="center">
+  <img src="docs/p1.png" alt="A generated QR code" width="46%">
+  &nbsp;&nbsp;
+  <img src="docs/p2.png" alt="The app's starting state" width="46%">
+</p>
+
+---
+
+## Overview  
+
+This project is a small but complete cloud application. The user enters a URL or any text, the backend generates a QR code as a PNG image, and the frontend displays it and offers a download. Behind the scenes, the app demonstrates a full DevOps workflow: the infrastructure is defined as code, and every push to the `main` branch automatically tests, builds, and deploys the app to Azure.
+
+It was built as a hands-on way to practice the end-to-end loop of modern software delivery — from writing the code, to provisioning cloud infrastructure, to automating the release.
+
+## Features
+
+- Generate a QR code from any URL or text
+- Download the result as a PNG image
+- Clean, responsive single-page interface
+- A documented REST API that returns QR codes as images
+- Health-check endpoint for monitoring and automated testing
+- Fully automated deployment — push to `main` and the app ships itself
+
+## Tech stack
+
+| Layer | Technology |
+|-------|-----------|
+| Backend | Python, FastAPI, qrcode, Pillow |
+| Frontend | TypeScript, Vite, HTML/CSS |
+| Hosting | Azure App Service (Linux) |
+| Infrastructure | Azure Bicep (infrastructure as code) |
+| CI/CD | GitHub Actions |
+| Testing | pytest |
+
+## How it works
 
 ```
-git push  ->  GitHub Actions  ->  Bicep provisions Azure  ->  app goes live
+git push  ->  GitHub Actions  ->  test  ->  build  ->  deploy to Azure  ->  live app
 ```
 
-- **Backend:** Python + FastAPI. Returns QR codes as PNG images.
-- **Frontend:** TypeScript (built with Vite). Calls the API and shows the QR code.
-- **Infra:** Bicep template — a Linux App Service Plan + Python Web App.
-- **Pipeline:** GitHub Actions — tests, builds, provisions infra, deploys, smoke-tests.
+On every push to `main`, the GitHub Actions pipeline:
 
-## Project layout
+1. **Tests** the backend with pytest
+2. **Builds** the TypeScript frontend with Vite
+3. **Packages** the app together with its Python dependencies
+4. **Deploys** it to Azure App Service
+5. **Smoke-tests** the live health endpoint to confirm the app is up
+
+The Azure infrastructure itself — the App Service Plan and the Web App — is defined in a Bicep template, so the whole hosting environment is reproducible and version-controlled rather than clicked together by hand.
+
+## API reference
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/` | The web interface |
+| `GET` | `/healthz` | Health check, returns `{"status": "ok"}` |
+| `GET` | `/api/qr?data=<text>` | Returns a PNG QR code encoding `data` |
+
+**Optional query parameters** on `/api/qr`:
+
+| Parameter | Range | Default | Description |
+|-----------|-------|---------|-------------|
+| `box_size` | 1–40 | 10 | Pixel size of each QR module |
+| `border` | 0–20 | 4 | Width of the quiet-zone border |
+
+**Example**
+
+```
+/api/qr?data=https://example.com&box_size=10&border=4
+```
+
+This returns a PNG image of the QR code, which the frontend displays and lets the user download.
+
+## Project structure
 
 ```
 qr-code-generator/
 ├── app/                      # FastAPI backend
-│   ├── main.py
-│   ├── requirements.txt
-│   └── test_main.py
+│   ├── main.py               # API routes + QR generation
+│   ├── requirements.txt      # Python dependencies
+│   └── test_main.py          # API tests
 ├── frontend/                 # TypeScript frontend
-│   ├── src/main.ts
-│   ├── index.html
+│   ├── src/main.ts           # Frontend logic
+│   ├── index.html            # Page + styling
 │   ├── package.json
 │   ├── tsconfig.json
 │   └── vite.config.ts
-├── infra/                    # Bicep infrastructure-as-code
-│   ├── main.bicep
-│   └── main.bicepparam
+├── infra/                    # Infrastructure as code
+│   ├── main.bicep            # Azure App Service definition
+│   └── main.bicepparam       # Deployment parameters
 ├── .github/workflows/
-│   └── deploy.yml            # The CI/CD pipeline
-└── .gitignore
+│   └── deploy.yml            # CI/CD pipeline
+└── README.md
 ```
 
-## Run it locally
+## Running locally
 
-**Backend:**
+**Backend**
 
 ```bash
 cd app
@@ -43,19 +115,17 @@ pip install -r requirements.txt
 python -m uvicorn main:app --reload --port 8000
 ```
 
-**Frontend (in a second terminal):**
+The API is now available at `http://localhost:8000`.
+
+**Frontend**
 
 ```bash
 cd frontend
 npm install
-npm run dev      # opens a dev server with hot reload
+npm run dev
 ```
 
-For a local dev setup, point the frontend's fetch at `http://localhost:8000`,
-or build the frontend (`npm run build`) and let FastAPI serve it — `main.py`
-automatically serves `frontend/dist` at `/` once it exists.
-
-**Run the tests:**
+**Run the tests**
 
 ```bash
 cd app
@@ -63,81 +133,40 @@ pip install pytest httpx
 pytest
 ```
 
-## Deploy to Azure
+## Deployment
 
-### One-time setup
-
-1. **Create a resource group:**
-
-   ```bash
-   az group create --name qr-rg --location westeurope
-   ```
-
-2. **Create a service principal** so GitHub Actions can log in. This prints a
-   JSON blob — copy the whole thing.
-
-   ```bash
-   az ad sp create-for-rbac \
-     --name qr-github-actions \
-     --role contributor \
-     --scopes /subscriptions/<your-sub-id>/resourceGroups/qr-rg \
-     --sdk-auth
-   ```
-
-3. **Add repo configuration** under *Settings → Secrets and variables → Actions*:
-
-   | Type     | Name                   | Value                                            |
-   |----------|------------------------|--------------------------------------------------|
-   | Secret   | `AZURE_CREDENTIALS`    | the JSON blob from step 2                         |
-   | Variable | `AZURE_RESOURCE_GROUP` | `qr-rg`                                           |
-   | Variable | `AZURE_WEBAPP_NAME`    | a globally unique name, e.g. `qr-gen-yourname-42` |
-
-### Deploy
-
-Push to `main` (or hit "Run workflow" in the Actions tab):
-
-```bash
-git push origin main
-```
-
-The pipeline will test the backend, build the frontend, run the Bicep template
-to provision the App Service, deploy the code, and finally curl the `/healthz`
-endpoint to confirm it's live. Your app will be at:
-
-```
-https://<AZURE_WEBAPP_NAME>.azurewebsites.net
-```
-
-### Deploy the infra manually (optional)
-
-You can also provision the infrastructure outside the pipeline to experiment:
+The infrastructure is provisioned once from the Bicep template:
 
 ```bash
 az deployment group create \
-  --resource-group qr-rg \
+  --resource-group <your-resource-group> \
   --template-file infra/main.bicep \
-  --parameters appName=qr-gen-yourname-42
+  --parameters appName=<your-app-name>
 ```
 
-## How the pieces connect
+After that, deployment is automatic: every push to `main` triggers the GitHub Actions pipeline, which builds and deploys the latest version of the app to Azure.
 
-- **`infra/main.bicep`** declares the desired Azure state. Re-running it is
-  safe and idempotent — Azure reconciles to match the template.
-- **`appCommandLine`** in the Bicep tells App Service how to start the app
-  (`uvicorn main:app`). `SCM_DO_BUILD_DURING_DEPLOYMENT=true` makes Azure install
-  `requirements.txt` on deploy.
-- **`healthCheckPath: /healthz`** lets Azure restart unhealthy instances, and the
-  pipeline reuses the same endpoint for its smoke test.
+To deploy from CI, two repository settings are needed:
 
-## Things to try next
+- A **secret** `AZURE_WEBAPP_PUBLISH_PROFILE` — the publish profile from the Azure Web App
+- A **variable** `AZURE_WEBAPP_NAME` — the name of the Web App
 
-- Add a `box_size` / `border` control to the frontend (the API already supports them).
-- Add an Azure Storage account to the Bicep template and save generated codes.
-- Add a staging slot and deploy there first, then swap to production.
+## What this project demonstrates
 
-## Note
+- Building and consuming a **REST API** with Python and FastAPI
+- Working with a **TypeScript** frontend that talks to a backend over HTTP
+- Defining cloud **infrastructure as code** with Azure Bicep
+- Setting up a complete **CI/CD pipeline** in GitHub Actions
+- Packaging and deploying a Python app to **Azure App Service**
+- Writing **automated tests** and wiring them into the release process
 
-This kit was scaffolded and the Python backend was tested end-to-end (tests pass,
-the API returns a valid PNG). The Bicep template is written against current
-resource provider API versions but should be validated against your subscription
-with `az bicep build --file infra/main.bicep` before your first real deploy.
+## Possible next steps
+
+- Expose the `box_size` and `border` options in the user interface
+- Add QR code styling (colors, logos in the center)
+- Store generated codes using Azure Storage or a database
+- Add a staging environment and deploy there before production
+
+---
+
+Built as a learning project to practice full-stack development, cloud deployment, and CI/CD.
